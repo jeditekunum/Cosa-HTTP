@@ -53,7 +53,7 @@ public:
      */
     bool begin(Socket* sock)
     {
-      if (sock == NULL) return (false);
+      if (UNLIKELY(sock == NULL)) return (false);
       m_sock = sock;
       return (sock->listen() == 0);
     }
@@ -77,7 +77,7 @@ public:
      */
     bool end()
     {
-      if (m_sock == NULL) return (false);
+      if (UNLIKELY(m_sock == NULL)) return (false);
       m_sock->close();
       m_sock = NULL;
       return (true);

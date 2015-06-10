@@ -32,7 +32,7 @@
 int
 HTTP::Server::run(uint32_t ms)
 {
-  if (m_sock == NULL) return (ENOTSOCK);
+  if (UNLIKELY(m_sock == NULL)) return (ENOTSOCK);
 
   // Wait for incoming connection requests
   // NOTE: LTO error; need rewrite to stack allocation
@@ -50,29 +50,29 @@ HTTP::Server::run(uint32_t ms)
   while (((res = m_sock->accept()) != 0) &&
 	 ((ms == 0L) || (Watchdog::millis() - start < ms)))
     yield();
-  if (res != 0) return (ETIME);
+  if (UNLIKELY(res != 0)) return (ETIME);
   start = Watchdog::millis();
   while (((res = m_sock->available()) == 0) &&
 	 ((ms == 0L) || (Watchdog::millis() - start < ms)))
     yield();
 
   // Parse request (method and url), call handler and flush buffered response
-  if (res <= 0) goto error;
+  if (UNLIKELY(res <= 0)) goto error;
   m_sock->gets(line, REQUEST_MAX);
   method = line;
   sp = strpbrk(line, " ");
-  if (sp == NULL) goto error;
+  if (UNLIKELY(sp == NULL)) goto error;
   path = sp + 1;
   *sp = 0;
   sp = strpbrk(path, " ?");
-  if (sp == NULL) goto error;
+  if (UNLIKELY(sp == NULL)) goto error;
   if (*sp != '?')
     query = NULL;
   else {
     query = sp + 1;
     *sp = 0;
     sp =  strpbrk(query, " ");
-    if (sp == NULL) goto error;
+    if (UNLIKELY(sp == NULL)) goto error;
   }
   *sp = 0;
 
@@ -90,7 +90,7 @@ HTTP::Server::run(uint32_t ms)
 bool
 HTTP::Client::begin(Socket* sock)
 {
-  if (sock == NULL) return (false);
+  if (UNLIKELY(sock == NULL)) return (false);
   m_sock = sock;
   return (true);
 }
@@ -98,7 +98,7 @@ HTTP::Client::begin(Socket* sock)
 bool
 HTTP::Client::end()
 {
-  if (m_sock == NULL) return (false);
+  if (UNLIKELY(m_sock == NULL)) return (false);
   m_sock->close();
   m_sock = NULL;
   return (true);
@@ -107,7 +107,7 @@ HTTP::Client::end()
 int
 HTTP::Client::get(const char* url, uint32_t ms)
 {
-  if (m_sock == NULL) return (ENOTSOCK);
+  if (UNLIKELY(m_sock == NULL)) return (ENOTSOCK);
   const uint8_t PREFIX_MAX = 7;
   uint16_t port = 80;
   char hostname[HOSTNAME_MAX];
@@ -147,9 +147,9 @@ HTTP::Client::get(const char* url, uint32_t ms)
 
   // Connect to the server
   res = m_sock->connect((const char*) hostname, port);
-  if (res != 0) goto error;
+  if (UNLIKELY(res != 0)) goto error;
   while ((res = m_sock->is_connected()) == 0) delay(16);
-  if (res < 0) goto error;
+  if (UNLIKELY(res < 0)) goto error;
 
   // Send a HTTP request
   m_sock->puts(PSTR("GET /"));
@@ -164,8 +164,8 @@ HTTP::Client::get(const char* url, uint32_t ms)
   while (((res = m_sock->available()) == 0) &&
 	 ((ms == 0L) || (Watchdog::millis() - start < ms)))
     delay(16);
-  if (res == 0) res = ETIME;
-  if (res < 0) goto error;
+  if (UNLIKELY(res == 0)) res = ETIME;
+  if (UNLIKELY(res < 0)) goto error;
   on_response(hostname, url);
   res = 0;
 
