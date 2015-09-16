@@ -94,7 +94,7 @@ public:
     }
 
     /**
-     * @override
+     * @override{HTTP::Server}
      * Application extension; Should implement the response to the
      * given request (http).
      * @param[in] page iostream for response.
@@ -160,7 +160,7 @@ public:
     int get(const char* url, uint32_t ms = 5000L);
 
     /**
-     * @override HTTP::Client
+     * @override{HTTP::Client}
      * Called when a server has been connected and a response is
      * ready to be read.
      * @param[in] hostname network name of host.
