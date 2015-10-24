@@ -80,7 +80,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
 
   // Get client connection information; MAC, IP address and port
   INET::addr_t addr;
-  get_client(addr);
+  client(addr);
 
   // Reply page; header and footer are static, contents dynamic
   static const char header[] __PROGMEM =
@@ -106,7 +106,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
   page << PSTR("Digital Pin:") << BR;
   page << PSTR("<TABLE>") << endl;
   page << PSTR("<TR>") << endl;
-  for (uint8_t i = 0; i < 19; i++) {
+  for (uint8_t i = 0; i < 20; i++) {
     Board::DigitalPin pin;
     pin = (Board::DigitalPin) pgm_read_byte(digital_pin_map + i);
     page << PSTR("<TD style=\"text-align: center; background-color: ");
@@ -118,20 +118,21 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
   }
   page << PSTR("</TR>") << endl;
   page << PSTR("<TR>") << endl;
-  for (uint8_t i = 0; i < 19; i++) {
+  for (uint8_t i = 0; i < 20; i++) {
     page << PSTR("<TD>D") << i << PSTR("</TD>") << endl;
   }
   page << PSTR("</TR>") << endl;
   page << PSTR("</TABLE>") << BR;
 
   // Analog pin reading: bar chart with percent of 1024 and pin number
+  AnalogPin::powerup();
   page << PSTR("Analog Pin:") << BR;
   page << PSTR("<TABLE class=\"noborders\">") << endl;
   page << PSTR("<TR>") << endl;
   for (uint8_t i = 0; i < membersof(analog_pin_map); i++) {
     Board::AnalogPin pin;
     pin = (Board::AnalogPin) pgm_read_byte(analog_pin_map + i);
-    uint16_t value = (AnalogPin::sample(pin) * 100L) / 1024;
+    uint16_t value = (AnalogPin::sample(pin) * 100L) / 1023;
     page << PSTR("<TD style=\"text-align: center; vertical-align: bottom\">");
     page << value;
     page << PSTR("<DIV style=\"display: block;");
@@ -155,6 +156,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
   page << PSTR("Vcc (mV): ") << vcc << BR;
   page << PSTR("Memory (byte): ") << free_memory() << BR;
   page << BR;
+  AnalogPin::powerdown();
 
   // Webserver status; uptime, request, mehod, path and query
   page << PSTR("Uptime (h:m:s): ") << h << ':' << m << ':' << s << BR;
@@ -168,6 +170,13 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
   page << PSTR("MAC: "); INET::print_mac(page, addr.mac); page << BR;
   page << PSTR("IP: "); INET::print_addr(page, addr.ip, addr.port); page << BR;
   page << (str_P) footer;
+
+  // Trace client
+  trace << PSTR("IP:");
+  INET::print_addr(trace, addr.ip, addr.port);
+  trace << PSTR(", MAC:");
+  INET::print_mac(trace, addr.mac);
+  trace << endl;
 }
 
 // Network configuration
@@ -198,6 +207,11 @@ void setup()
   // Initiate ethernet controller with address
   uint8_t ip[4] = { IP };
   uint8_t subnet[4] = { SUBNET };
+  trace << PSTR("IP:");
+  INET::print_addr(trace, ip, PORT);
+  trace << PSTR(", SUBNET:");
+  INET::print_addr(trace, subnet);
+  trace << endl;
   ASSERT(ethernet.begin(ip, subnet));
 
   // Start the server

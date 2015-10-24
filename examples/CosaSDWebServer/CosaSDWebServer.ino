@@ -42,6 +42,7 @@
 #include <SD.h>
 #include <FAT16.h>
 
+#include "Cosa/RTC.hh"
 #include "Cosa/Watchdog.hh"
 #include "Cosa/IOStream/Driver/UART.hh"
 #include "Cosa/Trace.hh"
@@ -67,7 +68,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
 
   // Trace client address and port
   INET::addr_t addr;
-  get_client(addr);
+  client(addr);
   INET::print_addr(trace, addr.ip, addr.port);
 
   // Filter path for root
@@ -104,7 +105,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
   uint8_t buf[BUF_MAX];
   int count;
   while ((count = file.read(buf, sizeof(buf))) > 0) {
-    page.get_device()->write(buf, count);
+    page.device()->write(buf, count);
   }
   file.close();
 }
@@ -132,16 +133,17 @@ void setup()
   uart.begin(9600);
   trace.begin(&uart, PSTR("CosaSDWebServer: started"));
   Watchdog::begin();
+  RTC::begin();
+
+  // Initiate the SD/FAT16 driver
+  ASSERT(sd.begin(CLOCK));
+  ASSERT(FAT16::begin(&sd));
 
   // Initiate ethernet controller with address and start server
   uint8_t ip[4] = { IP };
   uint8_t subnet[4] = { SUBNET };
   ASSERT(ethernet.begin(ip, subnet));
   ASSERT(server.begin(ethernet.socket(Socket::TCP, PORT)));
-
-  // Initiate the SD/FAT16 driver
-  ASSERT(sd.begin(CLOCK));
-  ASSERT(FAT16::begin(&sd));
 }
 
 void loop()

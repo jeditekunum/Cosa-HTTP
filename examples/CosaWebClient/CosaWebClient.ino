@@ -51,6 +51,9 @@
 OutputPin sd(Board::D4, 1);
 #endif
 
+// Configure to print incoming response
+#define PRINT_RESPONSE
+
 // Network configuration
 #define IP 192,168,1,100
 #define SUBNET 255,255,255,0
@@ -102,7 +105,7 @@ WebClient::on_response(const char* hostname, const char* path)
 
 void setup()
 {
-  uart.begin(9600);
+  uart.begin(115200);
   trace.begin(&uart, PSTR("CosaWebClient: started"));
   Watchdog::begin();
 
@@ -110,7 +113,6 @@ void setup()
   uint8_t ip[4] = { IP };
   uint8_t subnet[4] = { SUBNET };
   ASSERT(ethernet.begin(ip, subnet));
-
   WebClient client;
   client.begin(ethernet.socket(Socket::TCP));
   client.get("www.google.com");

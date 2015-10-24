@@ -87,10 +87,10 @@ public:
      * Get client address, network address and port.
      * @param[out] addr network address.
      */
-    void get_client(INET::addr_t& addr) const
+    void client(INET::addr_t& addr) const
       __attribute__((always_inline))
     {
-      m_sock->get_src(addr);
+      m_sock->src(addr);
     }
 
     /**
