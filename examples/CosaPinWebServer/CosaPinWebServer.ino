@@ -42,6 +42,7 @@
 #include <DNS.h>
 #include <DHCP.h>
 #include <HTTP.h>
+#include <W5X00.h>
 #include <W5100.h>
 
 #include "Cosa/Memory.h"
@@ -188,6 +189,7 @@ WebServer::on_request(IOStream& page, char* method, char* path, char* query)
 // W5100 Ethernet Controller with MAC-address
 static const uint8_t mac[6] __PROGMEM = { 0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed };
 W5100 ethernet(mac);
+// W5200 ethernet(mac);
 WebServer server;
 
 // Disable SD on Ethernet Shield

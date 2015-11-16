@@ -38,7 +38,9 @@
 #include <DNS.h>
 #include <DHCP.h>
 #include <HTTP.h>
+#include <W5X00.h>
 #include <W5100.h>
+// #include <W5200.h>
 
 #include "Cosa/Watchdog.hh"
 #include "Cosa/Trace.hh"
@@ -52,7 +54,7 @@ OutputPin sd(Board::D4, 1);
 #endif
 
 // Configure to print incoming response
-#define PRINT_RESPONSE
+// #define PRINT_RESPONSE
 
 // Network configuration
 #define IP 192,168,1,100
@@ -62,6 +64,7 @@ OutputPin sd(Board::D4, 1);
 // W5100 Ethernet Controller with MAC-address
 const uint8_t mac[6] __PROGMEM = { 0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed };
 W5100 ethernet(mac);
+// W5200 ethernet(mac);
 
 // Simple web client; Prints response with url, number of bytes and time
 class WebClient : public HTTP::Client {
@@ -91,16 +94,23 @@ WebClient::on_response(const char* hostname, const char* path)
   }
 #else
   while ((res = m_sock->read(buf, sizeof(buf) - 1)) >= 0) {
+    count += res;
+#if 0
     if (res > 0) {
       trace << '.';
       count += res;
       if ((count & 0xfffL) == 0) trace << endl;
     }
+#endif
   }
 #endif
   if ((count & 0xfffL) != 0) trace << endl;
+  uint32_t ms = Watchdog::millis() - start;
   trace << PSTR("Total (byte): ") << count << endl;
-  trace << PSTR("Time (ms): ") << Watchdog::millis() - start << endl;
+  trace << PSTR("Time (ms): ") << ms << endl;
+  if (ms != 0) {
+    trace << PSTR("Bandwidth (Kbyte/s): ") <<  count / ms << endl;
+  }
 }
 
 void setup()
@@ -115,6 +125,7 @@ void setup()
   ASSERT(ethernet.begin(ip, subnet));
   WebClient client;
   client.begin(ethernet.socket(Socket::TCP));
+  client.get("www.dn.se");
   client.get("www.google.com");
   client.get("www.arduino.cc");
   client.get("www.google.com/search?q=arduino");
